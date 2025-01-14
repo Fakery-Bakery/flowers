@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lecture Notes on Beauty and Art</title>
+  <!-- Single-File Example Using Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.jsdelivr.net/npm/kute.js@2.1.2/dist/kute.min.js"></script>
+
+  <style>
+    /* 
+      GLOBAL STYLES 
+      -----------------------------------------------------------------
+    */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      overflow-x: hidden;
+      font-family: 'Funnel Display', sans-serif;
+      color: #f5f5f5;
+      background: radial-gradient(ellipse at center, #0d3349 0%, #0f0f10 100%);
+      
+      /* Overall background => subtle dark radial gradient */
+      background: radial-gradient(
+        circle at center, 
+        rgba(20,25,30,1) 0%, 
+        rgba(15,15,16,1) 80%, 
+        rgba(10,10,10,1) 100%
+      );
+    }
+
+    /* 
+      SVG "cross-hatch" pattern (pink curves) 
+      We'll keep it subtle with low opacity.
+    */
+    .bg-hatch {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none; 
+      opacity: 0.03;
+    }
+
+/* 
+  PINK SPIRAL OVERLAY 
+  -----------------------------------------------------------------
+  Adjusted for better visibility.
+*/
+.pink-spiral-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;        /* Adjusted to ensure it's below other high-z-index elements */
+  pointer-events: none; /* let clicks pass through */
+  background: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="800" viewBox="0 0 1600 800">\
+<defs>\
+  <linearGradient id="pinkGradient" x1="0" y1="0" x2="1" y2="1">\
+    <stop offset="0%" stop-color="#c5174d"/>\
+    <stop offset="100%" stop-color="#dd3f31"/>\
+  </linearGradient>\
+</defs>\
+<g fill="none" stroke="url(#pinkGradient)" stroke-opacity="1" stroke-width="4">\
+<path d="M100 100 Q400 0 700 100 T1300 100"/>\
+<path d="M0 0 Q400 200 800 0 T1600 0" transform="translate(0,200)"/>\
+<path d="M0 0 Q400 200 800 0 T1600 0" transform="translate(0,400)"/>\
+<path d="M0 0 Q400 200 800 0 T1600 0" transform="translate(0,600)"/>\
+<path d="M100 100 Q400 0 700 100 T1300 100" transform="rotate(90 400 400)"/>\
+<path d="M100 100 Q400 0 700 100 T1300 100" transform="rotate(45 400 400)"/>\
+</g>\
+</svg>') center center / auto repeat;
+  mix-blend-mode: normal; /* Changed to normal for standard rendering */
+  opacity: 0.6;            /* Increased opacity for better visibility */
+}
+
+    /*
+      SECTION STYLES 
+      -----------------------------------------------------------------
+      We'll do a fade-in on scroll, plus an inner container so headings 
+      can be center-aligned, body text left-aligned.
+    */
+    section {
+      min-height: 100vh; 
+      width: 100%;
+      display: flex; 
+      flex-direction: column;
+      justify-content: center; 
+      align-items: center;
+      position: relative;
+      opacity: 0;               /* Start hidden for fade-in. */
+      transform: translateY(30px);
+      transition: opacity 1.2s ease, transform 1.2s ease;
+    }
+    section.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .section-inner {
+      max-width: 800px;
+      width: 90%;
+      margin: 0;
+      text-align: left;   /* left-justify body text */
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #fdfdfd;
+    }
+    p, li {
+      line-height: 1.6;
+      margin-bottom: 1em;
+    }
+    strong {
+      color: #fffdea;
+    }
+    a {
+      color: #ffd1e6;
+      text-decoration: underline;
+    }
+    a:hover {
+      color: #fff;
+    }
+
+    /* 
+      ALTERNATING BACKGROUND 
+    */
+    .bg-teal {
+      background: linear-gradient(135deg, #0f0f10 40%, #24303c 100%);
+    }
+    .bg-pink {
+      background: linear-gradient(135deg, #9e0861 20%, #dd3f31 120%);
+    }
+
+    /*
+      GRADIENT WAVE TRANSITIONS 
+      -----------------------------------------------------------------
+      Each wave is an inline <svg> that defines a linearGradient 
+      from the current section color to the next section color 
+      so the boundary is smoother. 
+      We keep them at ~60px high.
+    */
+    .wave-divider {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      overflow: hidden;
+    }
+    .wave-divider svg {
+      width: 100%;
+      height: 60px;
+      display: block;
+    }
+    .wave-top {
+      top: 0;
+      transform: rotate(180deg);
+    }
+    .wave-bottom {
+      bottom: 0;
+    }
+
+    /*
+      FINAL SECTION (flat, no fade).
+    */
+    .final-section {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+      background: #111;
+      color: #bbb;
+    }
+
+    .final-section pre {
+      white-space: pre-wrap;      /* Allows the text to wrap */
+      word-wrap: break-word;      /* Breaks long words if necessary */
+      overflow-wrap: break-word;  /* Ensures words break to prevent overflow */
+      background: #222;           /* Optional: Adds a subtle background to distinguish the preformatted text */
+      padding: 10px;              /* Optional: Adds padding for better readability */
+      border-radius: 5px;         /* Optional: Rounds the corners for a smoother look */
+}
+
+
+    /*
+      SECTION 7 => "Infinite Progress in Art" 
+      with two rotating, morphing blobs pinned to the RIGHT side 
+      so only half is visible.
+    */
+    .blob-section {
+      position: relative;
+      overflow: hidden;
+    }
+    .blob-background {
+      position: absolute;
+      top: 0; 
+      bottom: 0;
+      right: 0;   /* anchor to the right so only half is shown */
+      width: 50%; /* so that half the blob is off-screen to the right */
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Shared styles for all rotating blobs */
+    .blob-rotate {
+      position: absolute; 
+      top: 50%; 
+      left: 50%;
+      transform-origin: center;
+      width: 200%;  /* Ensures half of the blob is off-screen */
+      height: 200%;
+    }
+
+    /* Clockwise rotation for the first blob */
+    #blobSvg1.blob-rotate {
+      animation: rotateClockwise 18s linear infinite;
+      opacity: 0.7;
+      filter: blur(0px);
+    }
+
+    /* Counter-clockwise rotation for the second blob */
+    #blobSvg2.blob-rotate {
+      animation: rotateCounterClockwise 15s linear infinite;
+      opacity: 0.9;
+      filter: blur(0px);
+    }
+
+    /* Define keyframes for clockwise rotation */
+    @keyframes rotateClockwise {
+      from {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    /* Define keyframes for counter-clockwise rotation */
+    @keyframes rotateCounterClockwise {
+      from {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      to {
+        transform: translate(-50%, -50%) rotate(-360deg);
+      }
+    }
+    .blob-content {
+      position: relative;
+      z-index: 1; /* keep text above the blobs */
+    }
+
+    @media (max-width: 600px) {
+      .section-inner {
+        max-width: 95%;
+      }
+      h2 {
+        font-size: 1.3rem;
+      }
+      p, li {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Pink spiral overlay at top z-layer -->
+  <div class="pink-spiral-overlay"></div>
+
+  <!-- SECTION 1: Summary -->
+  <section class="bg-teal" id="section1">
+    <div class="section-inner">
+      <h2>Overview of Flowers Lecture</h2>
+      <p><strong>Summary:</strong> This document contains concise notes from a lecture by David Deutsch which explores why flowers are (and art in general is) beautiful.</p>
+      <p><a href="https://youtu.be/gT7DFCF1Fn8">Reference: Why Are Flowers Beautiful by David Deutsch</a></p>
+    </div>
+  </section>
+
+  <!-- SECTION 2: 1. Art as Iterative Problem-Solving -->
+  <section class="bg-pink" id="section2">
+    <!-- Wave top => gradient from teal->pink -->
+    <div class="wave-divider wave-top">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="tealToPink1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#24303c" />
+            <stop offset="100%" stop-color="#9e0861" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#tealToPink1)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+
+    <div class="section-inner">
+      <h2>1. Art as Iterative Problem-Solving</h2>
+      <ul>
+        <li><strong>Consistent Error, Failure, and Correction:</strong> Art develops through trial-and-error. Artists propose solutions (conjectures) to aesthetic problems, test them, and refine them (criticism).</li>
+        <li><strong>Aesthetic Problems and Standards:</strong>
+          <ul>
+            <li>Artists face genuine aesthetic problems that guide their work.</li>
+            <li>These standards of beauty or “what makes art good” change over time through conjecture and criticism.</li>
+            <li>Improvement in art is possible because standards evolve and can be refined.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Wave bottom => gradient from pink->teal -->
+    <div class="wave-divider wave-bottom">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pinkToTeal1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9e0861" />
+            <stop offset="100%" stop-color="#24303c" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#pinkToTeal1)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SECTION 3: 2. The Nature of Beauty and Appreciation -->
+  <section class="bg-teal" id="section3">
+    <div class="wave-divider wave-top">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pinkToTeal2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9e0861" />
+            <stop offset="100%" stop-color="#24303c" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#pinkToTeal2)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+
+    <div class="section-inner">
+      <h2>2. The Nature of Beauty and Appreciation</h2>
+      <ul>
+        <li><strong>Beauty as Attractiveness:</strong>
+          <ul>
+            <li>Beauty is a form of “attractiveness.” When we find something beautiful, we naturally want to focus attention on it.</li>
+            <li>Appreciation involves an investment of energy and attention.</li>
+          </ul>
+        </li>
+        <li><strong>Boring vs. Interesting:</strong>
+          <ul>
+            <li>A piece of art that is “boring” shows no indication that someone thought deeply about how to make it beautiful.</li>
+            <li>By contrast, art with aesthetic value indicates thoughtful attempts at improvement.</li>
+          </ul>
+        </li>
+        <li><strong>Opposite of Beautiful Is Boring:</strong>
+          <ul>
+            <li>Being camouflaged (boring) is effectively invisible—beauty stands out and attracts.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="wave-divider wave-bottom">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="tealToPink2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#24303c" />
+            <stop offset="100%" stop-color="#9e0861" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#tealToPink2)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SECTION 4: 3. Creativity and Unpredictability -->
+  <section class="bg-pink" id="section4">
+    <div class="wave-divider wave-top">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="tealToPink3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#24303c" />
+            <stop offset="100%" stop-color="#9e0861" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#tealToPink3)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+
+    <div class="section-inner">
+      <h2>3. Creativity and Unpredictability</h2>
+      <ul>
+        <li><strong>Creative Discovery:</strong>
+          <ul>
+            <li>Discovery of knowledge is inherently creative, and so is making art.</li>
+            <li>True creativity is unpredictable (though not random), so new knowledge/art cannot be fully foreseen.</li>
+          </ul>
+        </li>
+        <li><strong>Repetition vs. Creation:</strong>
+          <ul>
+            <li>Copying is not creativity; it yields predictable outcomes, not genuine progress.</li>
+            <li>Real art arises from solving new aesthetic problems in unpredictable ways.</li>
+          </ul>
+        </li>
+        <li><strong>Viewer’s Role:</strong>
+          <ul>
+            <li>Appreciating art requires the viewer to create a new understanding, adding a creative element.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="wave-divider wave-bottom">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pinkToTeal3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9e0861" />
+            <stop offset="100%" stop-color="#24303c" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#pinkToTeal3)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SECTION 5: 4. Objective and Subjective Beauty -->
+  <section class="bg-teal" id="section5">
+    <div class="wave-divider wave-top">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pinkToTeal4" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9e0861" />
+            <stop offset="100%" stop-color="#24303c" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#pinkToTeal4)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+
+    <div class="section-inner">
+      <h2>4. Objective and Subjective Beauty</h2>
+      <ul>
+        <li><strong>Subjective Standards:</strong>
+          <ul>
+            <li>Some aspects of beauty depend on species, culture, individual taste.</li>
+            <li>Humans rarely share attractiveness criteria with other animals.</li>
+          </ul>
+        </li>
+        <li><strong>Objective Standards:</strong>
+          <ul>
+            <li>Certain criteria of beauty might be universally recognized (e.g. most humans find flowers beautiful).</li>
+            <li>This might stem from cross-species communication, like flowers signaling insects across a big gap.</li>
+            <li>Humans also communicate aesthetically across large differences in perspective.</li>
+          </ul>
+        </li>
+        <li><strong>Human Beauty and Evolution:</strong>
+          <ul>
+            <li>Conjecture: human physical traits partly reflect objective standards.</li>
+            <li>As we understand objective beauty better, it may explain how humans diverged from apes & continue to evolve.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="wave-divider wave-bottom">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="tealToPink4" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#24303c" />
+            <stop offset="100%" stop-color="#9e0861" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#tealToPink4)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SECTION 6: 5. Aesthetics as a Driving Force... -->
+  <section class="bg-pink" id="section6">
+    <div class="wave-divider wave-top">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="tealToPink5" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#24303c" />
+            <stop offset="100%" stop-color="#9e0861" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#tealToPink5)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+
+    <div class="section-inner">
+      <h2>5. Aesthetics as a Driving Force in Science and Culture</h2>
+      <ul>
+        <li><strong>Aesthetic Motivation in Mathematics and Science:</strong>
+          <ul>
+            <li>Pursuit of truth is partly driven by an aesthetic sense of elegance or beauty in theories.</li>
+            <li>A world without aesthetics would not be comprehensible scientifically, and vice versa.</li>
+          </ul>
+        </li>
+        <li><strong>Art Supporting Other Domains:</strong>
+          <ul>
+            <li>Art can serve finite ends (e.g., religious or commercial) but can also aim at infinite improvement.</li>
+            <li>Pure aesthetic development mirrors “blue-sky” research in science, both seeking new unifications.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="wave-divider wave-bottom">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pinkToTeal5" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9e0861" />
+            <stop offset="100%" stop-color="#24303c" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#pinkToTeal5)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+  </section>
+
+<!-- SECTION 7: 6. Infinite Progress in Art (BLOBS anchored right) -->
+<section class="bg-teal blob-section" id="section7">
+  <div class="wave-divider wave-top">
+    <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pinkToTeal6" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#24303c" />
+          <stop offset="100%" stop-color="#9e0861" />
+        </linearGradient>
+      </defs>
+      <path fill="url(#pinkToTeal6)"
+        d="M321.39,56.44c58-10.79,114.16-30.13,
+           172-41.86,82.39-16.72,168.19-17.73,
+           250.45-.39C823.78,31,906.67,72,985.66,92.83,
+           c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+           A600.21,600.21,0,0,0,321.39,56.44Z"/>
+    </svg>
+  </div>
+
+  <!-- Right-anchored rotating/morphing blobs -->
+  <div class="blob-background">
+    <!-- 1st blob -->
+    <svg id="blobSvg1" class="blob-rotate" viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(480 270)">
+        <path
+          id="blob1A"
+          fill="#BB004B"
+          d="M148.7 -134.9C193.7 -103.7 231.9 -51.9 232.4 0.6C233 53 196.1 106.1 151.1 128.6C106.1 151.1 53 143 -4.4 147.4C-61.8 151.8 -123.5 168.5 -151.2 146C-178.8 123.5 -172.4 61.8 -172.8 -0.4C-173.1 -62.5 -180.3 -124.9 -152.6 -156.1C-124.9 -187.3 -62.5 -187.1 -5.3 -181.8C51.9 -176.5 103.7 -166 148.7 -134.9"
+        ></path>
+      </g>
+      <g transform="translate(480 270)" style="visibility: hidden;">
+        <path
+          id="blob1B"
+          fill="#BB004B"
+          d="M115.4 -137.9C137.9 -92.9 136.4 -46.4 133.6 -2.8C130.8 40.8 126.6 81.6 104.1 118.4C81.6 155.2 40.8 188.1 -8.4 196.5C-57.5 204.8 -115 188.7 -151 151.9C-187 115 -201.5 57.5 -190.8 10.7C-180.1 -36.1 -144.1 -72.1 -108.1 -117.1C-72.1 -162.1 -36.1 -216.1 5.2 -221.2C46.4 -226.4 92.9 -182.9 115.4 -137.9"
+        ></path>
+      </g>
+    </svg>
+
+    <!-- 2nd blob -->
+    <svg id="blobSvg2" class="blob-rotate" viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(480 270)">
+        <path
+          id="blob2A"
+          fill="#FF0080"
+          d="M136.2 -156.3C173.3 -127.2 193.3 -63.6 184.3 -14.4C175.3 34.8 137.3 69.7 100.2 109.5C63.1 149.3 26.9 194.1 -11.4 204.4C-49.8 214.6 -99.5 190.2 -147.5 150.4C-195.4 110.6 -241.6 55.3 -225.1 13.6C-208.7 -28.1 -129.5 -56.2 -77.1 -85.2C-24.7 -114.1 0.8 -144 38.2 -168C75.6 -192 151.2 -210.5 136.2 -156.3"
+        ></path>
+      </g>
+      <g transform="translate(480 270)" style="visibility: hidden;">
+        <path
+          id="blob2B"
+          fill="#FF0080"
+          d="M117.4 -131C153 -86.9 178.9 -43.4 176.8 -0.7C174.8 42.1 144.7 84.2 109.1 128.6C73.5 173 32.4 219.8 -17.3 236.1C-67 252.4 -134 238.1 -172.2 192.1C-210.4 146.1 -219.8 68.5 -200.4 12.5C-180.9 -43.5 -132.6 -86.9 -86.5 -132.1C-40.4 -177.4 3.4 -224.5 46.2 -225.8C89 -227.1 132 -182.8 117.4 -131"
+        ></path>
+      </g>
+    </svg>
+  </div>
+
+  <div class="section-inner blob-content">
+    <h2>6. Infinite Progress in Art</h2>
+    <ul>
+      <li><strong>Unbounded Artistic Growth:</strong>
+        <ul>
+          <li>Art can progress infinitely if directed toward deeper, more universal aesthetic standards.</li>
+          <li>If a technique (like pure replication) can be perfected, it’s not true “art” (no final endpoint for real art).</li>
+        </ul>
+      </li>
+      <li><strong>Future of Art:</strong>
+        <ul>
+          <li>We may develop new senses or qualia specifically for beauty, expanding how we experience aesthetic value.</li>
+          <li>Artistic progress, like scientific progress, is unending: there’s always more to discover, unify, and refine.</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  <div class="wave-divider wave-bottom">
+    <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="tealToPink6" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#24303c" />
+          <stop offset="100%" stop-color="#9e0861" />
+        </linearGradient>
+      </defs>
+      <path fill="url(#tealToPink6)"
+        d="M321.39,56.44c58-10.79,114.16-30.13,
+           172-41.86,82.39-16.72,168.19-17.73,
+           250.45-.39C823.78,31,906.67,72,985.66,92.83,
+           c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+           A600.21,600.21,0,0,0,321.39,56.44Z"/>
+    </svg>
+  </div>
+</section>
+
+  <!-- SECTION 8: 7. Critique of “Art as Self-Expression” -->
+  <section class="bg-pink" id="section8">
+    <div class="wave-divider wave-top">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="tealToPink7" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#24303c" />
+            <stop offset="100%" stop-color="#9e0861" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#tealToPink7)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+
+    <div class="section-inner">
+      <h2>7. Critique of “Art as Self-Expression”</h2>
+      <ul>
+        <li><strong>Creation vs. Expression:</strong>
+          <ul>
+            <li>Expression points to something already existing and can be perfected.</li>
+            <li>Real art invents something new and unpredictable, going beyond the finite “self.”</li>
+          </ul>
+        </li>
+        <li><strong>Spontaneity vs. Progress:</strong>
+          <ul>
+            <li>Purely spontaneous acts (with no iterative refinement) do not necessarily produce artistic progress.</li>
+            <li>Improvement requires sustained conjecture, criticism, and creativity.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="wave-divider wave-bottom">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pinkToTeal7" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9e0861" />
+            <stop offset="100%" stop-color="#24303c" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#pinkToTeal7)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SECTION 9: 8. Big-Picture Implications -->
+  <section class="bg-teal" id="section9">
+    <div class="wave-divider wave-top">
+      <svg preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pinkToTeal8" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9e0861" />
+            <stop offset="100%" stop-color="#24303c" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#pinkToTeal8)"
+          d="M321.39,56.44c58-10.79,114.16-30.13,
+             172-41.86,82.39-16.72,168.19-17.73,
+             250.45-.39C823.78,31,906.67,72,985.66,92.83,
+             c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35
+             A600.21,600.21,0,0,0,321.39,56.44Z"/>
+      </svg>
+    </div>
+
+    <div class="section-inner">
+      <h2>8. Big-Picture Implications</h2>
+      <ul>
+        <li><strong>Beauty as a Sign of Universal Creativity:</strong>
+          <ul>
+            <li>An open question is whether beauty might indicate universal computation or intelligence.</li>
+            <li>If something is truly beautiful, it might signal creative intelligence behind it.</li>
+          </ul>
+        </li>
+        <li><strong>Societal Emphasis on Beauty:</strong>
+          <ul>
+            <li>If society invested in aesthetics as much as in science or technology, our concepts of beauty could evolve rapidly.</li>
+            <li>This need not be destructive—cultural evolution of beauty can be collaborative and constructive.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FINAL SECTION -->
+  <section class="final-section" id="final">
+    <hr />
+    <div class="section-inner">
+      <p><strong>Document Creation Note:</strong> This document was created using ChatGPT gpt o1 pro Mode.</p>
+
+      <p><strong>Original Prompt:</strong></p>
+<pre>
+    [User’s first request with notes]
+
+I want you to please organize and condense and clarify these notes, contained within the triple backticks below.
+```
+- the process of art is consistent error, failure, and error correction
+- art can be improved
+- Artists have authentically aesthetic problems which are solved by conjecture and criticsm leading to improvement
+- Authentically aesthetic problems are standards by which to make a work of art, these standards also change bu conjecture and criticsm leading to improvement
+- true is achieved by understanding more deeply and more broadly. this necessarily entails more unification
+	- Q: what is meant by deep and broad?
+- A boring picture and a picture with some aesthetic value can be distinguished partially by the awareness/suspicion that someone thought about what it would take to improve it aesthetically, to make it more beautiful
+- beauty is a form of attractiveness
+	- To appreciate means you are willing to work/put energy into focusing attention in order to appreciate more in it. What you are appreciating is what you think is beautiful
+	- as an artist, what you see in the unfinished process is something you want to bring more of
+- The discovery of knowledge is creative (invariably). The same with art. Discovery of art is creative. Which means you cannot predict new knowledge nor new works of art
+- a viewer of art must create a new understanding to appreciate art.
+- Repetition is not art, copying is not a creative act (because it does not have fundamentally unpredictable outputs)
+- Creativity must be unpredictable (though it is necessarily not random nor arbitrary) This applies both for beauty and knowledge
+- a person can learn and decide to be attracted to anything, including things that are biologically and culturally aversive
+- the reason to pursue truth in mathematics or science is ultimately aesthetic. The criteria is truth, but it would not be pursued nor recognized without its beauty
+- a world without aesthetics would not be comprehensible scientifically. a world that is not explicable in a scientific sense would not have the anchor to reality necessary to create art.
+- the opposite of beautiful is boring. (in the way that predator animals are more attracted to prey, and the prey try to be invisible/camoflouged to the predators. competitive evolution with opponent processing of attraction and boredom)
+- it is very rare that humans share any of the criteria of attractiveness with other animals.
+- most people find most flowers beautiful, even if they have never seen one similar. plants use flowers to communicate complex information to another species (insects) that have no shared genes. The easiest way to communicate across this gap is to use objective standards
+	- I do not see this jump at all
+	- peacocks are beautiful by happen stance, you can tell because most other species birds are not beautiful. However nearly all species of flowers are beautiful, so it indicates some other category of thing (namely objective beauty standards)
+- communication between humans is analogous to communication between species. human artists communicate across the same scale of gap as plants to insects, and the easiest way is to use objective standards
+- there are subjective standards for beauty which are species specific, culture specific, individual specific
+- there are objective standards for beauty
+- Pure Aesthetic Development: Pure Aesthetic Problems: Creating Beauty for its Own Sake: Advancing Cultural Standards
+	- The state of mind for this pure aesthetic development is the same as the state of mind for pure "blue sky" scientific research. Both are seeking objectivity
+- **Prediction Of This Conjecture:** It is likely that human beauty (like their face and body and exterior expression) must in part satisfy standards of objective beauty (in addition to subjective species specific and cultural beauty), so as we more clearly understand objective beauty, we will understand that the difference between how humans and apes look is all based on objective standards. And further, humans will continue to develop to meet objective standards of beauty.
+- The direction of objective improvement is the only direction which there is unlimited progress
+- All subjective directions of improvement are finite
+- Art and Beauty can improve infinitely (if done in the objective direction)
+- techniques such as replication are not objective art (or do not meet objective beauty standards) because they are perfectable. If there is possible end point, then it is necessarily not objective, and not real art.
+- Artistic Appreciation can be refined, infinitely
+- improving artistic values is an objective improvement (for humanity or for the universe, i guess)
+- Theories that say art is about self-expression must be wrong. Because expression is about something that already exists, and can be perfectable. Real art is about creating something new (and unpredictable and not perfectable). Further self is finite and subjective
+- Any art involving spontaneous acts is unlikely to constitute artistic progress
+- The future of art can create unlimited increases in beauty
+	- similar to how the future of technology can create unlimited increases in knowledge
+- The future of art can create new forms of elegance and unification
+- The future we may develop additional senses and qualia that is totally inconievable to us currently, senses and qualia that are designed specifically for beauty
+- evolution is not necessarily savage, like biological evolution sometimes is, the development of beauty need not be distructive
+- our notions of beauty and beauty standards should change rapidly, if our society puts as much effort into beauty as is put into science
+- art can support many things (religion, sales, whatever) but they are necessarily finite and will be replaced by infinite development of beauty for its own sake
+- Question: Can beauty be an indication of universal computation and creativity? (another way of saying, would beauty be an indication of contact with an intelligent species or ai?)
+```
+    
+    [User’s subsequent request]
+
+Will you please turn this into an html document?
+
+- Remove where you said "Below is a condensed and clarified outline of the main ideas in your notes..."
+- Add a very short single line summary at the top, summary of the notes and what the notes are (notes from a lecture)
+- Add this youtube link under the summary `https://youtu.be/gT7DFCF1Fn8`
+- and then after the main body of the document append to the end a note about how the document was created (using ChatGPT gpt o1 pro Mode) along with the original prompt (with the original unedited notes there) and with this prompt
+
+    [User's next request]
+
+I want this website to be updated so that it looks more beautiful. (See html below). The intent is to add a pretty font (I tried importing one from google fonts into the header but it did not work), and I want you to add an svg background that distinguishes the sections, so that as I scroll it looks pretty. 
+
+The background should be a dark teal/blue/black vignette gradient over the whole page, with various dark pink spirals and curves throughout the design. Should be almost as if having a pink curved cross hatch. And then each section should have a obvious curved lines across the whole page to distinguish it with the background shade alternating lighter and darker between each section.
+
+use bold contrasts between sections, such that one is more teal/blue/black, and the next section is more pink, and then back to teal/blue and so on. with very interesting and cool transitions.
+
+The intent is for the page to give the sense of flowers, pink and blue-ish flowers. Change any design elements to give more of this flowery essence.
+
+The text should be appropriately light or dark to contrast with the background.
+
+Make each section almost fade in as I scroll, and fade out as I scroll past it, until the last about document creation, that should be rather flat with a more consistent design.
+
+I want my code to all be contained into one file.
+
+I don't know what is involved, svg, css, java, idk. Use whatever you need to. Also make it all into this single file, I just want it all in this one html.
+
+    [There was back and forth to make the design, which will be omitted]
+</pre>
+    </div>
+  </section>
+
+  <!-- 
+    KUTE.js (inline minified) for path morphing with fromTo + yoyo. 
+    Source: https://cdn.jsdelivr.net/npm/kute.js@2.1.2/dist/kute.min.js
+  -->
+  <script>
+  /*! KUTE.js - The Lightest JavaScript tweening engine in the world - MIT License (c) 2015-2021 Romain Petit */
+  (function(e,t){"function"==typeof define&&define.amd?define([],function(){return t(e)}):"object"==typeof exports?module.exports=t(e):e.KUTE=t(e)})(window,function(E){var W={"linear":function(e){return e},"easeInQuad":function(e){return e*e},"easeOutQuad":function(e){return e*(2-e)},"easeInOutQuad":function(e){return e<.5?2*e*e:-1+(4-2*e)*e},"easeInCubic":function(e){return e*e*e},"easeOutCubic":function(e){return--e*e*e+1},"easeInOutCubic":function(e){return e<.5?4*e*e*e:(e-1)*(2*e-2)*(2*e-2)+1},"easeInQuart":function(e){return e*e*e*e},"easeOutQuart":function(e){return 1- --e*e*e*e},"easeInOutQuart":function(e){return e<.5?8*e*e*e*e:1-8*--e*e*e*e},"easeInQuint":function(e){return e*e*e*e*e},"easeOutQuint":function(e){return 1+--e*e*e*e*e},"easeInOutQuint":function(e){return e<.5?16*e*e*e*e*e:1+16*--e*e*e*e*e}};function r(e){return parseFloat(e)||0}function F(){return"undefined"!=typeof window&&"undefined"!=typeof document}function o(e){return Array.isArray(e)?e:"object"==typeof e&&e!==null?[e]:document.querySelectorAll(e)}function P(e,t,n){this.element=e,this.property="path",this.valuesStart={path:t},this.valuesEnd={path:n},this._startTime=0,this._easingFunction=W.easeInOutCubic,this._duration=1000,this._repeat=0,this._delay=0,this._yoyo=!1,this._onStart=null,this._onUpdate=null,this._onComplete=null,this._easing=null,this._repeatDelay=void 0,this._reversed=!1,this._paused=!1,this._playing=!1}P.prototype={start:function(e){return this._startTime=void 0!==e?e:performance.now(),this._startTime+=this._delay,this._playing=!0,g(this),this},stop:function(){return this._playing=!1,h(this),this},pause:function(){return this._paused=!0,this},resume:function(){return this._paused=!1,this},onStart:function(e){return this._onStart=e,this},onUpdate:function(e){return this._onUpdate=e,this},onComplete:function(e){return this._onComplete=e,this},delay:function(e){return this._delay=e,this},easing:function(e){return"function"==typeof e&&(this._easingFunction=e),this},duration:function(e){return this._duration="number"==typeof e?e:1e3,this},repeat:function(e){return this._repeat=e,this},repeatDelay:function(e){return this._repeatDelay=e,this},yoyo:function(e){return this._yoyo=e,this},update:function(e){if(!this._playing||this._paused)return!0;if(e<this._startTime)return!0;null!==this._onStart&&("function"==typeof this._onStart&&this._onStart.call(this.element),this._onStart=null);var t=(e-this._startTime)/this._duration;if(1<(t=t>1?1:t)){if(this._repeat>0){this._repeat--;this._yoyo&&!this._reversed?(this._reversed=!0,[this.valuesStart.path,this.valuesEnd.path]=[this.valuesEnd.path,this.valuesStart.path]):this._yoyo&&this._reversed?(this._reversed=!1,[this.valuesStart.path,this.valuesEnd.path]=[this.valuesEnd.path,this.valuesStart.path]):this._startTime=e+(this._repeatDelay||0);if(0===this._repeat){if(null!==this._onComplete&&("function"==typeof this._onComplete&&this._onComplete.call(this.element)),!this._yoyo)return!1}else null!==this._onUpdate&&"function"==typeof this._onUpdate&&this._onUpdate.call(this.element,1);return!0}var n=this._easingFunction(t),i=function(e,t,n){for(var i=function(e){return e.split(/(?=[Mm])/).filter(function(e){return e.length>0})}(e),o=function(e){return e.map(function(e){var t=e.trim().split(/[\s,]+/),n=t.shift(),i=t.map(parseFloat);return{type:n,values:i}})}(i),r=function(e){return e.reduce(function(e,t){return e.push({type:t.type,values:t.values.slice(0)}),e},[])}(o),a=function(e){return e.map(function(e){return e.type+" "+e.values.join(" ")}).join(" ")};!function(e,t,n){for(var i=0;i<e.length;i++){var o=e[i],r=t[i];if(r)for(var a=0;a<o.values.length;a++)o.values[a]=o.values[a]+(r.values[a]-o.values[a])*n}}(r,function(e){return e.split(/(?=[Mm])/).filter(function(e){return e.length>0})}(t).map(function(e){var t=e.trim().split(/[\s,]+/),n=t.shift();return{type:n,values:t.map(parseFloat)}}),n);return a(r)}(this.valuesStart.path,this.valuesEnd.path,n);return this.element.setAttribute("d",i),null!==this._onUpdate&&this._onUpdate.call(this.element,t),!0}},function e(t){var n=v.slice(0);for(var i=0,o=n.length;i<o;i++)n[i]&&n[i].update(t);0<v.length&&A(e)};var v=[],g=function(e){-1===v.indexOf(e)&&v.push(e)},h=function(e){var t=v.indexOf(e);-1<t&&v.splice(t,1)},y=F()?requestAnimationFrame:function(e){return setTimeout(e,1e3/60)},A=F()?function(e){return requestAnimationFrame(e)}:function(e){return setTimeout(e,1e3/60)};return F()&&A(function e(t){!function(e){for(var t=v.slice(0),n=0,i=t.length;n<i;n++)t[n].update(e)}(t),A(e)}),{fromTo:function(e,t,n,i){var o="string"==typeof e?document.querySelector(e):e,r=o?o:null;if(!r||!t||!n)return null;var a=new P(r,t,n);return i&&(i.duration&&a.duration(i.duration),i.delay&&a.delay(i.delay),i.easing&&a.easing(i.easing),i.repeat&&a.repeat(i.repeat),i.yoyo&&a.yoyo(i.yoyo),i.repeatDelay&&a.repeatDelay(i.repeatDelay),i.onUpdate&&a.onUpdate(i.onUpdate),i.onComplete&&a.onComplete(i.onComplete)),a.start(performance.now()),a}}});
+
+  </script>
+
+  <!-- Intersection Observer for fade-in/fade-out -->
+
+ <script>
+  // Intersection Observer for fade-in/fade-out
+  const sections = document.querySelectorAll('section:not(.final-section)');
+  const options = { threshold: 0.2 };
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+      } else {
+        entry.target.classList.remove('active');
+      }
+    });
+  }, options);
+  sections.forEach(section => observer.observe(section));
+
+  // Setup the morph transitions for each rotating blob using KUTE.fromTo(...)
+  window.addEventListener('DOMContentLoaded', () => {
+    // 1st blob
+    const blob1A = document.getElementById('blob1A');
+    const blob1B = document.getElementById('blob1B');
+    if (blob1A && blob1B) {
+      blob1B.parentNode.style.visibility = 'visible';
+      KUTE.fromTo(
+        blob1A,
+        { path: blob1A.getAttribute('d') },
+        { path: blob1B.getAttribute('d') },
+        {
+          duration: 850,
+          repeat: 999,
+          yoyo: true,
+          easing: 'easeInOutCubic'
+        }
+      ).start();
+    }
+
+    // 2nd blob
+    const blob2A = document.getElementById('blob2A');
+    const blob2B = document.getElementById('blob2B');
+    if (blob2A && blob2B) {
+      blob2B.parentNode.style.visibility = 'visible';
+      KUTE.fromTo(
+        blob2A,
+        { path: blob2A.getAttribute('d') },
+        { path: blob2B.getAttribute('d') },
+        {
+          duration: 1300,
+          repeat: 999,
+          yoyo: true,
+          easing: 'easeInOutCubic'
+        }
+      ).start();
+    }
+  });
+</script>
+</body>
+</html>
